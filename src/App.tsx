@@ -7,19 +7,26 @@ import {
   ChevronLeft, 
   Activity, 
   Cpu, 
-  ShieldCheck 
+  ShieldCheck,
+  History,
+  Clock
 } from 'lucide-react';
 
-const API_URL = "ws://localhost:8000";
+// LIVE PRODUCTION API CONFIGURATION
+const BASE_DOMAIN = "ai-backend--huzaifamm70.replit.app";
+const API_URL = `wss://${BASE_DOMAIN}/api`;
+const REST_API_URL = `https://${BASE_DOMAIN}/api`;
 
 function App() {
   const [mode, setMode] = useState<'hero' | 'writing' | 'age'>('hero');
   const [result, setResult] = useState<any>(null);
   const [processedImg, setProcessedImg] = useState<string | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
   const webcamRef = useRef<Webcam>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    fetchLogs();
     if (mode !== 'hero') {
       const endpoint = mode === 'writing' ? '/ws/air-writing' : '/ws/age-detection';
       const ws = new WebSocket(`${API_URL}${endpoint}`);
@@ -31,6 +38,7 @@ function App() {
           setProcessedImg(data.image);
         } else {
           setResult(data);
+          if (data.age) fetchLogs(); // Refresh logs when age is detected
         }
       };
 
@@ -52,6 +60,16 @@ function App() {
       setResult(null);
     }
   }, [mode]);
+
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch(`${REST_API_URL}/logs`);
+      const data = await response.json();
+      setLogs(data);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  };
 
   const resetCanvas = () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -84,7 +102,7 @@ function App() {
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div className="glass" style={{ padding: '8px 16px', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-            v1.0.0 Stable
+            v1.1.0 DB Connected
           </div>
         </div>
       </nav>
@@ -92,7 +110,7 @@ function App() {
       {mode === 'hero' && (
         <section className="hero animate-in">
           <div className="glass" style={{ padding: '8px 20px', borderRadius: '100px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--secondary)' }}>
-            <Activity size={16} /> Powered by Neural Networks
+            <Activity size={16} /> Powered by Neural Networks & Neon DB
           </div>
           <h1 className="gradient-text">Future of Vision AI</h1>
           <p>
@@ -174,23 +192,33 @@ function App() {
                 )}
               </div>
 
-              <div className="glass stat-card" style={{ flex: 1 }}>
-                <h4 style={{ marginBottom: '1rem' }}>System Health</h4>
+              <div className="glass stat-card" style={{ flex: 1, maxHeight: '300px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+                  <History size={18} color="var(--primary)" />
+                  <h4>Detection History</h4>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                    <span style={{ color: 'var(--text-dim)' }}>Processing Latency</span>
-                    <span style={{ color: '#00ff00' }}>42ms</span>
-                  </div>
-                  <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
-                    <div style={{ width: '85%', height: '100%', background: 'var(--secondary)', borderRadius: '2px' }}></div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginTop: '8px' }}>
-                    <span style={{ color: 'var(--text-dim)' }}>Model Confidence</span>
-                    <span style={{ color: 'var(--secondary)' }}>94.2%</span>
-                  </div>
-                  <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
-                    <div style={{ width: '94%', height: '100%', background: 'var(--primary)', borderRadius: '2px' }}></div>
-                  </div>
+                  {logs.length > 0 ? logs.map((log, i) => (
+                    <div key={i} style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      fontSize: '0.85rem', 
+                      paddingBottom: '8px',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={12} color="var(--text-dim)" />
+                        <span style={{ color: 'var(--text-dim)' }}>
+                          {new Date(log.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <span style={{ fontWeight: 700, color: 'var(--secondary)' }}>
+                        Age: {log.result_value}
+                      </span>
+                    </div>
+                  )) : (
+                    <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', textAlign: 'center' }}>No logs yet</p>
+                  )}
                 </div>
               </div>
             </div>
