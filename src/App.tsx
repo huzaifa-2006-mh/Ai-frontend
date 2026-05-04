@@ -12,13 +12,10 @@ import {
   Clock
 } from 'lucide-react';
 
-// LIVE PRODUCTION API CONFIGURATION - ALWAYS POINT TO REPLIT
-const BASE_DOMAIN = "ai-backend--huzaifamm70.replit.app";
-const API_URL = `wss://${BASE_DOMAIN}/api`;
-const REST_API_URL = `https://${BASE_DOMAIN}/api`;
-
-const FINAL_API_URL = API_URL;
-const FINAL_REST_URL = REST_API_URL;
+// LIVE PRODUCTION API CONFIGURATION
+const API_BASE = "ai-backend--huzaifamm70.replit.app";
+const FINAL_API_URL = `wss://${API_BASE}/api`;
+const FINAL_REST_URL = `https://${API_BASE}/api`;
 
 function App() {
   const [mode, setMode] = useState<'hero' | 'writing' | 'age'>('hero');
