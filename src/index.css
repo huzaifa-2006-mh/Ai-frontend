@@ -230,3 +230,24 @@
   .feature-grid { grid-template-columns: 1fr; }
 }
 
+.status-pill.open { color: #10b981; }
+.status-pill.connecting { color: #f59e0b; }
+.status-pill.closed { color: #ef4444; }
+
+.status-dot.open { background: #10b981; box-shadow: 0 0 12px #10b981; }
+.status-dot.connecting { background: #f59e0b; box-shadow: 0 0 12px #f59e0b; }
+.status-dot.closed { background: #ef4444; box-shadow: 0 0 12px #ef4444; }
+
+.camera-placeholder {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  color: var(--text-dim);
+  z-index: 10;
+}
+

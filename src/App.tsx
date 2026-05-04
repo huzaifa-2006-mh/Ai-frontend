@@ -29,15 +29,21 @@ function App() {
   const [result, setResult] = useState<any>(null);
   const [processedImg, setProcessedImg] = useState<string | null>(null);
   const [logs, setLogs] = useState<any[]>([]);
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'open' | 'closed'>('closed');
   const webcamRef = useRef<Webcam>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     fetchLogs();
     if (mode !== 'hero') {
+      setWsStatus('connecting');
       const endpoint = mode === 'writing' ? '/ws/air-writing' : '/ws/age-detection';
       const ws = new WebSocket(`${FINAL_API_URL}${endpoint}`);
       wsRef.current = ws;
+
+      ws.onopen = () => setWsStatus('open');
+      ws.onclose = () => setWsStatus('closed');
+      ws.onerror = () => setWsStatus('closed');
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -57,7 +63,7 @@ function App() {
             ws.send(JSON.stringify({ type: 'frame', image: imageSrc }));
           }
         }
-      }, 150); // Increased interval slightly for better stability
+      }, 200); // 5 FPS is plenty for these tasks and prevents server overload
 
       return () => {
         clearInterval(interval);
@@ -66,6 +72,7 @@ function App() {
     } else {
       setProcessedImg(null);
       setResult(null);
+      setWsStatus('closed');
     }
   }, [mode]);
 
@@ -99,9 +106,9 @@ function App() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <div className="glass status-pill">
-            <div className="status-dot"></div>
-            System Active
+          <div className={`glass status-pill ${wsStatus}`}>
+            <div className={`status-dot ${wsStatus}`}></div>
+            {wsStatus === 'open' ? 'System Online' : wsStatus === 'connecting' ? 'Connecting...' : 'System Offline'}
           </div>
         </div>
       </nav>
@@ -167,6 +174,12 @@ function App() {
                 />
               )}
               <div className="camera-overlay"></div>
+              {wsStatus !== 'open' && (
+                <div className="camera-placeholder">
+                  <RefreshCw className="pulse" size={48} />
+                  <p>Establishing Secure Link...</p>
+                </div>
+              )}
             </div>
 
             <div className="analysis-panel">
@@ -178,12 +191,15 @@ function App() {
                 
                 {mode === 'age' && (
                   <div className="stat-content">
-                    <div className="stat-val">{result?.age ? `${result.age}` : '--'} <span style={{ fontSize: '1rem', color: 'var(--text-dim)' }}>Years</span></div>
+                    <div className="stat-val">
+                      {result?.age ? `${result.age}` : wsStatus === 'open' ? 'Scanning' : '--'} 
+                      {result?.age && <span style={{ fontSize: '1rem', color: 'var(--text-dim)' }}>Years</span>}
+                    </div>
                     <div className="confidence-bar">
-                      <div className="confidence-fill" style={{ width: result?.age ? '92%' : '0%' }}></div>
+                      <div className="confidence-fill" style={{ width: result?.confidence ? `${result.confidence * 100}%` : '0%' }}></div>
                     </div>
                     <p className="stat-desc">
-                      AI Confidence: {result?.age ? '92.4%' : 'Scanning...'}
+                      AI Confidence: {result?.confidence ? `${(result.confidence * 100).toFixed(1)}%` : wsStatus === 'open' ? 'Calibrating...' : 'Offline'}
                     </p>
                   </div>
                 )}
@@ -194,7 +210,7 @@ function App() {
                       <RefreshCw size={20} /> Clear Canvas
                     </button>
                     <div className="hint-box">
-                      <strong>Tip:</strong> Raise your index finger above your knuckle to start writing.
+                      <strong>Tip:</strong> Raise your index finger and keep it extended to start writing.
                     </div>
                   </div>
                 )}
@@ -231,6 +247,7 @@ function App() {
     </div>
   );
 }
+
 
 
 export default App;
