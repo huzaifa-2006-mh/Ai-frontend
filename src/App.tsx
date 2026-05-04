@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 // LIVE PRODUCTION API CONFIGURATION
-const API_BASE = "ai-backend--huzaifamm70.replit.app";
+const API_BASE = "ai-backend--mhsoftwarehouse.replit.app";
 const FINAL_API_URL = `wss://${API_BASE}/api`;
 const FINAL_REST_URL = `https://${API_BASE}/api`;
 
