@@ -34,9 +34,20 @@ function App() {
       const ws = new WebSocket(`${FINAL_API_URL}${endpoint}`);
       wsRef.current = ws;
 
-      ws.onopen = () => setWsStatus('open');
-      ws.onclose = () => setWsStatus('closed');
-      ws.onerror = () => setWsStatus('closed');
+      ws.onopen = () => {
+        console.log("Connected to AI Backend");
+        setWsStatus('open');
+      };
+      
+      ws.onclose = (e) => {
+        console.log("Connection Closed:", e.code);
+        setWsStatus('closed');
+      };
+      
+      ws.onerror = (e) => {
+        console.error("Connection Error:", e);
+        setWsStatus('closed');
+      };
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
